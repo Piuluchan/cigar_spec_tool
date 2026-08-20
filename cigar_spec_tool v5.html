@@ -1,0 +1,1755 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>进口雪茄品规查询与录入工具系统</title>
+  <style>
+    :root {
+      --bg-main: #fcfcf9;
+      --surface-card: #ffffff;
+      --color-green-dark: #2e5a44;
+      --color-green-light: #4a7c59;
+      --color-brown-dark: #6e4720;
+      --color-brown-light: #a07855;
+      --text-primary: #2b2b2a;
+      --text-muted: #7a7a75;
+      --border-color: #e2e2da;
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --shadow-sm: 0 2px 8px rgba(46, 90, 68, 0.04);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body { 
+      font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, "PingFang SC", "Microsoft YaHei", sans-serif; 
+      background-color: var(--bg-main);
+      color: var(--text-primary);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .wrap { 
+      width: 100%;
+      max-width: 800px; 
+      margin: 0 auto; 
+      padding: 1.5rem 1rem; 
+    }
+
+    /* 导航标签页 */
+    .tabs { 
+      display: flex; 
+      background: #f1f1eb;
+      padding: 4px;
+      border-radius: var(--radius-md); 
+      margin-bottom: 1.5rem; 
+    }
+    .tab { 
+      flex: 1; 
+      padding: 12px 8px; 
+      font-size: 14px; 
+      font-weight: 500; 
+      background: transparent; 
+      color: var(--text-muted); 
+      border: none; 
+      border-radius: var(--radius-sm);
+      cursor: pointer; 
+      transition: all 0.2s ease; 
+      text-align: center;
+    }
+    .tab.active { 
+      background: var(--surface-card); 
+      color: var(--color-green-dark); 
+      box-shadow: var(--shadow-sm);
+      font-weight: 600;
+    }
+
+    /* 面板容器 */
+    .panel { 
+      display: none; 
+      background: var(--surface-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 1.5rem;
+      box-shadow: var(--shadow-sm);
+    }
+    .panel.active { display: block; }
+
+    /* 表单布局 */
+    .field { margin-bottom: 1.25rem; }
+    label { 
+      display: block; 
+      font-size: 13px; 
+      font-weight: 600;
+      color: var(--color-brown-dark); 
+      margin-bottom: 6px; 
+      letter-spacing: 0.5px;
+    }
+    
+    /* 输入控件 */
+    select, input[type=text], input[type=number] { 
+      width: 100%; 
+      padding: 10px 12px;
+      font-size: 14px;
+      background-color: #fafaf7;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      outline: none;
+      transition: all 0.2s ease;
+    }
+    select:focus, input[type=text]:focus, input[type=number]:focus {
+      border-color: var(--color-green-light);
+      background-color: var(--surface-card);
+      box-shadow: 0 0 0 3px rgba(74, 124, 89, 0.1);
+    }
+
+    /* 动态输入组合框 */
+    .custom-input-group {
+      display: flex;
+      gap: 8px;
+    }
+    .custom-input-group select { flex: 2; }
+    .custom-input-group input { flex: 3; }
+
+    /* 多列布局 */
+    .row2, .row3 { display: flex; flex-direction: column; gap: 0; }
+
+    @media (min-width: 768px) {
+      .wrap { padding: 3rem 1.5rem; }
+      .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+      .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+      .field-btn-container { display: flex; align-items: flex-end; }
+    }
+
+    /* 按钮 */
+    .btn { 
+      width: 100%; 
+      padding: 11px; 
+      font-size: 14px; 
+      font-weight: 600; 
+      cursor: pointer; 
+      border: 1px solid var(--color-green-dark); 
+      border-radius: var(--radius-sm); 
+      background: var(--color-green-dark); 
+      color: white; 
+      transition: all 0.2s ease;
+      letter-spacing: 0.5px;
+    }
+    .btn:hover { 
+      background: var(--color-green-light); 
+      border-color: var(--color-green-light);
+    }
+
+    /* 结果展示 */
+    .result-box { 
+      margin-top: 1.5rem; 
+      background: #fafaf7; 
+      border: 1px dashed var(--color-brown-light); 
+      border-radius: var(--radius-md); 
+      padding: 1.25rem; 
+      display: none; 
+    }
+    .result-box.show { display: block; }
+    .result-label { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin-bottom: 6px; }
+    .result-main { font-size: 18px; font-weight: 600; color: var(--color-brown-dark); margin-bottom: 12px; }
+    
+    .result-row { display: flex; gap: 32px; margin-bottom: 12px; background: #ffffff; padding: 10px 16px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); }
+    .result-item .val { font-size: 16px; font-weight: 600; color: var(--color-green-dark); }
+    .result-item .lbl { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+    .copy-area { 
+      background: #ffffff; 
+      border: 1px solid var(--border-color); 
+      border-radius: var(--radius-sm); 
+      padding: 12px; 
+      font-size: 15px; 
+      font-weight: 600;
+      color: var(--color-brown-dark); 
+      font-family: monospace, SFMono-Regular, Menlo; 
+      margin-bottom: 12px; 
+      word-break: break-all;
+    }
+    
+    .copy-btn { 
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px; 
+      font-weight: 600;
+      padding: 8px 16px; 
+      border: 1px solid var(--color-brown-light); 
+      border-radius: var(--radius-sm); 
+      background: transparent; 
+      color: var(--color-brown-dark); 
+      cursor: pointer; 
+      transition: all 0.2s;
+    }
+    .copy-btn:hover { 
+      background: var(--color-brown-dark); 
+      color: white; 
+    }
+
+
+    .extra-info { margin-top: 10px; }
+    .cuban-badge { display: inline-block; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px; margin-bottom: 6px; letter-spacing: 0.5px; }
+    .cuban-badge.cuban { background: rgba(46, 90, 68, 0.12); color: var(--color-green-dark); }
+    .cuban-badge.nc { background: rgba(160, 120, 85, 0.15); color: var(--color-brown-dark); }
+    .cn-name { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
+    .match-item .cuban-badge { margin-top: 6px; }
+    .match-item .cn-name { margin-top: 4px; }
+
+    /* 逆向检索匹配列表 */
+    .match-list { margin-top: 0.75rem; }
+    .match-item { 
+      padding: 12px 16px; 
+      border: 1px solid var(--border-color); 
+      border-radius: var(--radius-sm); 
+      margin-bottom: 8px; 
+      cursor: pointer; 
+      background: var(--surface-card); 
+      transition: all 0.2s ease;
+    }
+    .match-item:hover { 
+      border-color: var(--color-green-light); 
+      background: #fafaf7;
+      transform: translateY(-1px);
+    }
+    .match-item .brand { font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: bold; }
+    .match-item .name { font-size: 15px; font-weight: 600; color: var(--color-brown-dark); margin: 2px 0; }
+    .match-item .spec { font-size: 13px; color: var(--color-green-dark); font-family: monospace; }
+    .no-match { font-size: 14px; color: var(--text-muted); padding: 12px 0; text-align: center; }
+
+    /* 提示吐司 */
+    .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: var(--color-green-dark); color: white; padding: 10px 22px; border-radius: 30px; font-size: 13px; font-weight: 500; opacity: 0; box-shadow: 0 4px 12px rgba(0,0,0,0.1); transition: opacity 0.25s ease; pointer-events: none; z-index: 999; }
+    .toast.show { opacity: 1; }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
+
+    /* 录入记录表格 */
+    .records-section {
+      margin-top: 24px;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      background: var(--surface-card);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+    }
+    .records-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border-color);
+      background: rgba(46, 90, 68, 0.03);
+    }
+    .records-title { font-weight: 700; font-size: 15px; color: var(--text-primary); }
+    .records-count {
+      display: inline-block;
+      background: var(--color-green-dark);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      border-radius: 20px;
+      padding: 1px 8px;
+      margin-left: 6px;
+      vertical-align: middle;
+    }
+    .records-actions { display: flex; gap: 8px; }
+    .records-btn {
+      font-size: 12.5px;
+      padding: 6px 12px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-color);
+      background: #fff;
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .records-btn:hover { border-color: var(--color-green-light); color: var(--color-green-dark); }
+    .records-btn-danger { color: #a8402f; }
+    .records-btn-danger:hover { border-color: #a8402f; color: #a8402f; }
+    .records-table-wrap {
+      max-height: 33vh;
+      min-height: 90px;
+      overflow-y: auto;
+      position: relative;
+    }
+    .records-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+    .records-table thead th {
+      position: sticky;
+      top: 0;
+      background: var(--surface-card);
+      text-align: left;
+      padding: 8px 10px;
+      font-weight: 700;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border-color);
+      z-index: 1;
+    }
+    .records-table tbody td {
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--border-color);
+      vertical-align: top;
+      color: var(--text-primary);
+    }
+    .records-table tbody tr:hover { background: rgba(46, 90, 68, 0.03); }
+    .records-table .rec-source {
+      display: inline-block;
+      font-size: 10.5px;
+      font-weight: 700;
+      padding: 1px 6px;
+      border-radius: 4px;
+      background: rgba(160, 120, 85, 0.15);
+      color: var(--color-brown-dark);
+      white-space: nowrap;
+    }
+    .records-table .rec-text { font-family: "SF Mono", Consolas, monospace; word-break: break-all; }
+    .records-table .rec-del {
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 15px;
+      line-height: 1;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+    .records-table .rec-del:hover { color: #a8402f; background: rgba(168, 64, 47, 0.08); }
+    .records-empty {
+      display: none;
+      padding: 28px 12px;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+    .records-empty.show { display: block; }
+    .copyright-footer {
+      text-align: center;
+      font-size: 11px;
+      color: var(--text-muted);
+      padding: 14px 0 6px;
+      opacity: 0.8;
+    }
+
+    /* 移动端 */
+    @media (max-width: 640px) {
+      .records-table thead { display: none; }
+      .records-table, .records-table tbody {
+        display: block;
+        width: 100%;
+      }
+      .records-table tr {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-sm);
+        margin: 10px;
+        padding: 10px 40px 10px 12px;
+        position: relative;
+      }
+      .records-table td {
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+        padding: 3px 0;
+        border-bottom: none;
+      }
+      .records-table td::before {
+        content: attr(data-label);
+        flex: 0 0 46px;
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--text-muted);
+        padding-top: 2px;
+      }
+      .records-table td[data-col="idx"] { display: none; }
+      .records-table td[data-col="text"] {
+        font-size: 13px;
+        line-height: 1.5;
+        padding: 6px 0;
+        order: -1; 
+      }
+      .records-table td[data-col="text"]::before { padding-top: 0; }
+      .records-table td[data-col="del"] {
+        position: absolute;
+        top: 8px;
+        right: 6px;
+        padding: 0;
+      }
+      .records-table td[data-col="del"]::before { content: none; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="wrap">
+  <h2 class="sr-only">进口雪茄品规查询与录入工具系统</h2>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('forward')">已知品规 → 查尺寸</button>
+    <button class="tab" onclick="switchTab('reverse')">已测尺寸 → 查品规</button>
+    <button class="tab" onclick="switchTab('input')">生成品规录入格式</button>
+  </div>
+
+  <div id="panel-forward" class="panel active">
+    <div class="field">
+      <label>模糊搜索（输入品牌或规格关键字，例如 "高希霸 世纪6" 或 "cohiba siglo"）</label>
+      <input type="text" id="fw-search" placeholder="支持拼写不完全一致的模糊匹配" oninput="doFwFuzzySearch()" />
+      <div id="fw-search-list" class="match-list"></div>
+    </div>
+    <div class="field">
+      <label>品牌（精确选择）</label>
+      <select id="fw-brand" onchange="updateFwModels()">
+        <option value="">选择品牌</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>品规型号</label>
+      <select id="fw-model" onchange="showForwardResult()">
+        <option value="">选择品规</option>
+      </select>
+    </div>
+    <div id="fw-result" class="result-box">
+      <div class="result-label">标准规格</div>
+      <div class="result-main" id="fw-name"></div>
+      <div class="result-row">
+        <div class="result-item" style="margin-right:24px;"><div class="val" id="fw-ring"></div><div class="lbl">环径</div></div>
+        <div class="result-item"><div class="val" id="fw-len"></div><div class="lbl">长度</div></div>
+      </div>
+      <div class="copy-area" id="fw-copy-text"></div>
+      <button class="copy-btn" onclick="copyFwFormat()">复制录入格式</button>
+      <div class="extra-info" id="fw-extra-info"></div>
+    </div>
+  </div>
+
+  <div id="panel-reverse" class="panel">
+    <div class="row2">
+      <div class="field">
+        <label>环径</label>
+        <div class="custom-input-group">
+          <select id="rv-ring" onchange="toggleCustomInput('rv-ring', 'rv-ring-custom')">
+            <option value="">请选择</option>
+          </select>
+          <input type="number" id="rv-ring-custom" style="display:none;" placeholder="输入新环径" />
+        </div>
+      </div>
+      <div class="field">
+        <label>品牌（可选）</label>
+        <select id="rv-brand">
+          <option value="">不限品牌</option>
+        </select>
+      </div>
+    </div>
+    <div class="row3">
+      <div class="field">
+        <label>长度整数</label>
+        <div class="custom-input-group">
+          <select id="rv-len-int" onchange="toggleCustomInput('rv-len-int', 'rv-len-int-custom')">
+            <option value="">请选择</option>
+            <option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option>
+          </select>
+          <input type="number" id="rv-len-int-custom" style="display:none;" placeholder="输入新长度" />
+        </div>
+      </div>
+      <div class="field">
+        <label>长度分数</label>
+        <select id="rv-len-frac">
+          <option value="0">无分数</option>
+          <option value="1/8">⅛</option>
+          <option value="1/4">¼</option>
+          <option value="3/8">⅜</option>
+          <option value="1/2">½</option>
+          <option value="5/8">⅝</option>
+          <option value="3/4">¾</option>
+          <option value="7/8">⅞</option>
+        </select>
+      </div>
+      <div class="field field-btn-container">
+        <button class="btn" onclick="doReverse()">查询匹配品规</button>
+      </div>
+    </div>
+    <div id="rv-result" class="result-box">
+      <div class="result-label" id="rv-result-label">匹配结果</div>
+      <div id="rv-match-list" class="match-list"></div>
+    </div>
+  </div>
+
+  <div id="panel-input" class="panel">
+    <div class="row2">
+      <div class="field">
+        <label>品牌（可选，留空则不生成品牌部分）</label>
+        <input type="text" id="inp-brand" placeholder="例如：COHIBA" />
+      </div>
+      <div class="field">
+        <label>规格名称（可选，留空则不生成规格部分）</label>
+        <input type="text" id="inp-model" placeholder="例如：Siglo VI" />
+      </div>
+    </div>
+    <div class="row2">
+      <div class="field">
+        <label>环径</label>
+        <div class="custom-input-group">
+          <select id="inp-ring" onchange="toggleCustomInput('inp-ring', 'inp-ring-custom')">
+            <option value="">请选择</option>
+          </select>
+          <input type="number" id="inp-ring-custom" style="display:none;" placeholder="输入新环径" />
+        </div>
+      </div>
+      <div class="field"></div>
+    </div>
+    <div class="row3">
+      <div class="field">
+        <label>长度整数</label>
+        <div class="custom-input-group">
+          <select id="inp-len-int" onchange="toggleCustomInput('inp-len-int', 'inp-len-int-custom')">
+            <option value="">请选择</option>
+            <option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option>
+          </select>
+          <input type="number" id="inp-len-int-custom" style="display:none;" placeholder="输入新长度" />
+        </div>
+      </div>
+      <div class="field">
+        <label>长度分数</label>
+        <select id="inp-len-frac">
+          <option value="0">无分数</option>
+          <option value="1/8">⅛</option>
+          <option value="1/4">¼</option>
+          <option value="3/8">⅜</option>
+          <option value="1/2">½</option>
+          <option value="5/8">⅝</option>
+          <option value="3/4">¾</option>
+          <option value="7/8">⅞</option>
+        </select>
+      </div>
+      <div class="field field-btn-container">
+        <button class="btn" onclick="genFormat()">生成录入格式</button>
+      </div>
+    </div>
+    <div id="inp-result" class="result-box">
+      <div class="result-label">录入文本结果</div>
+      <div class="copy-area" id="inp-copy-text"></div>
+      <button class="copy-btn" onclick="copyText('inp-copy-text')">复制文本</button>
+      <div class="result-label" style="margin-top:16px;">数据库中最相似的3个品规（供核对参考）</div>
+      <div id="inp-suggest-list" class="match-list"></div>
+    </div>
+  </div>
+
+  <div class="records-section">
+    <div class="records-header">
+      <div class="records-title">录入记录 <span id="records-count" class="records-count">0</span></div>
+      <div class="records-actions">
+        <button class="records-btn" onclick="exportRecordsCSV()">导出 Excel</button>
+        <button class="records-btn records-btn-danger" onclick="clearAllRecords()">清除全部</button>
+      </div>
+    </div>
+    <div class="records-table-wrap">
+      <table class="records-table">
+        <thead>
+          <tr>
+            <th style="width:34px;">#</th>
+            <th style="width:60px;">来源</th>
+            <th>录入格式文本</th>
+            <th style="width:70px;">环径</th>
+            <th style="width:80px;">长度</th>
+            <th style="width:110px;">时间</th>
+            <th style="width:44px;"></th>
+          </tr>
+        </thead>
+        <tbody id="records-tbody">
+        </tbody>
+      </table>
+      <div id="records-empty" class="records-empty">暂无记录，在上方任一模块生成录入格式后会自动记录在这里</div>
+    </div>
+  </div>
+  <div class="copyright-footer">© 江苏省烟草公司镇江市公司　未经许可，禁止篡改。</div>
+</div>
+
+<div class="toast" id="toast">已复制</div>
+
+<script>
+const DB = [
+  // ==============================
+  // BOLIVAR
+  // ==============================
+
+  {brand:"BOLIVAR",name:"BELICOSOS FINOS",ring:52,len_int:5,len_frac:"1/2"},
+  {brand:"BOLIVAR",name:"ROYAL CORONAS",ring:50,len_int:4,len_frac:"7/8"},
+  {brand:"BOLIVAR",name:"CORONAS EXTRA",ring:44,len_int:5,len_frac:"5/8"},
+  {brand:"BOLIVAR",name:"CORONAS JUNIOR",ring:38,len_int:4,len_frac:"3/8"},
+  {brand:"BOLIVAR",name:"PETIT CORONAS",ring:42,len_int:5,len_frac:"1/8"},
+  {brand:"BOLIVAR",name:"LIBERTADOR",ring:54,len_int:6,len_frac:"1/2"},
+  {brand:"BOLIVAR",name:"NEW GOLD MEDAL",ring:48,len_int:6,len_frac:"1/2"},
+  {brand:"BOLIVAR",name:"REGENTES",ring:40,len_int:5,len_frac:"1/8"},
+  {brand:"BOLIVAR",name:"SOBERANOS",ring:54,len_int:6,len_frac:"1/2"},
+
+  // ==============================
+  // COHIBA
+  // ==============================
+
+  {brand:"COHIBA",name:"LANCEROS",ring:38,len_int:7,len_frac:"1/2"},
+  {brand:"COHIBA",name:"CORONAS ESPECIALES",ring:38,len_int:6,len_frac:"0"},
+  {brand:"COHIBA",name:"PANETELAS",ring:26,len_int:4,len_frac:"0"},
+  {brand:"COHIBA",name:"ESPLENDIDOS",ring:47,len_int:7,len_frac:"0"},
+  {brand:"COHIBA",name:"ROBUSTOS",ring:50,len_int:4,len_frac:"7/8"},
+  {brand:"COHIBA",name:"EXQUISITOS",ring:36,len_int:5,len_frac:"1/2"},
+  {brand:"COHIBA",name:"SIGLO I",ring:40,len_int:4,len_frac:"0"},
+  {brand:"COHIBA",name:"SIGLO II",ring:42,len_int:5,len_frac:"1/8"},
+  {brand:"COHIBA",name:"SIGLO III",ring:42,len_int:6,len_frac:"0"},
+  {brand:"COHIBA",name:"SIGLO IV",ring:46,len_int:5,len_frac:"5/8"},
+  {brand:"COHIBA",name:"SIGLO V",ring:43,len_int:6,len_frac:"3/4"},
+  {brand:"COHIBA",name:"SIGLO VI",ring:52,len_int:5,len_frac:"7/8"},
+  {brand:"COHIBA",name:"MEDIO SIGLO",ring:52,len_int:4,len_frac:"0"},
+  {brand:"COHIBA",name:"PIRAMIDES",ring:52,len_int:6,len_frac:"1/8"},
+  {brand:"COHIBA",name:"PIRAMIDES EXTRA",ring:54,len_int:6,len_frac:"1/4"},
+  {brand:"COHIBA",name:"BEHIKE 52",ring:52,len_int:4,len_frac:"3/4"},
+  {brand:"COHIBA",name:"BEHIKE 54",ring:54,len_int:5,len_frac:"3/4"},
+  {brand:"COHIBA",name:"BEHIKE 56",ring:56,len_int:6,len_frac:"1/2"},
+
+  // ==============================
+  // CUABA
+  // ==============================
+
+  {brand:"CUABA",name:"DIVINOS",ring:43,len_int:4,len_frac:"3/8"},
+  {brand:"CUABA",name:"EXCLUSIVOS",ring:46,len_int:5,len_frac:"5/8"},
+  {brand:"CUABA",name:"GENEROSOS",ring:52,len_int:6,len_frac:"1/8"},
+  {brand:"CUABA",name:"DISTINGUIDOS",ring:46,len_int:7,len_frac:"5/8"},
+  {brand:"CUABA",name:"SALOMONES",ring:57,len_int:7,len_frac:"1/8"},
+  {brand:"CUABA",name:"PIRAMIDES",ring:52,len_int:6,len_frac:"1/8"},
+
+  // ==============================
+  // DIPLOMATICOS
+  // ==============================
+
+  {brand:"DIPLOMATICOS",name:"NO.1",ring:42,len_int:6,len_frac:"5/8"},
+  {brand:"DIPLOMATICOS",name:"NO.2",ring:52,len_int:6,len_frac:"1/8"},
+  {brand:"DIPLOMATICOS",name:"NO.3",ring:42,len_int:5,len_frac:"5/8"},
+  {brand:"DIPLOMATICOS",name:"NO.4",ring:48,len_int:5,len_frac:"5/8"},
+  {brand:"DIPLOMATICOS",name:"NO.5",ring:40,len_int:4,len_frac:"0"},
+  {brand:"DIPLOMATICOS",name:"COLONIALES",ring:44,len_int:5,len_frac:"1/4"},
+  {brand:"DIPLOMATICOS",name:"LEONES",ring:42,len_int:6,len_frac:"1/2"},
+
+
+  // ==============================
+  // EL REY DEL MUNDO
+  // ==============================
+
+  {brand:"EL REY DEL MUNDO",name:"CHOIX SUPREME",ring:48,len_int:5,len_frac:"1/2"},
+  {brand:"EL REY DEL MUNDO",name:"LILIPUTANOS",ring:30,len_int:4,len_frac:"1/8"},
+  {brand:"EL REY DEL MUNDO",name:"CORONAS DE LUXE",ring:42,len_int:5,len_frac:"5/8"},
+  {brand:"EL REY DEL MUNDO",name:"DEMI TASSE",ring:30,len_int:4,len_frac:"3/8"},
+  {brand:"EL REY DEL MUNDO",name:"PETIT CORONAS",ring:40,len_int:5,len_frac:"1/8"},
+  {brand:"EL REY DEL MUNDO",name:"LORD BYRON",ring:54,len_int:5,len_frac:"1/8"},
+
+
+  // ==============================
+  // FONSECA
+  // ==============================
+
+  {brand:"FONSECA",name:"NO.1",ring:40,len_int:6,len_frac:"5/8"},
+  {brand:"FONSECA",name:"COSACOS",ring:42,len_int:6,len_frac:"1/2"},
+  {brand:"FONSECA",name:"DELICIAS",ring:40,len_int:5,len_frac:"5/8"},
+  {brand:"FONSECA",name:"CADetes",ring:29,len_int:4,len_frac:"1/2"},
+
+
+  // ==============================
+  // H. UPMANN
+  // ==============================
+
+  {brand:"H. UPMANN",name:"HALF CORONA",ring:44,len_int:3,len_frac:"1/2"},
+  {brand:"H. UPMANN",name:"NO.2",ring:52,len_int:6,len_frac:"1/8"},
+  {brand:"H. UPMANN",name:"NO.1",ring:46,len_int:6,len_frac:"5/8"},
+  {brand:"H. UPMANN",name:"MAGNUM 46",ring:46,len_int:5,len_frac:"5/8"},
+  {brand:"H. UPMANN",name:"MAGNUM 50",ring:50,len_int:6,len_frac:"0"},
+  {brand:"H. UPMANN",name:"MAGNUM 54",ring:54,len_int:4,len_frac:"3/4"},
+  {brand:"H. UPMANN",name:"CONNOISSEUR NO.1",ring:48,len_int:5,len_frac:"1/8"},
+  {brand:"H. UPMANN",name:"CONNOISSEUR A",ring:52,len_int:5,len_frac:"7/8"},
+  {brand:"H. UPMANN",name:"SIR WINSTON",ring:47,len_int:7,len_frac:"5/8"},
+  {brand:"H. UPMANN",name:"MAJOR",ring:40,len_int:5,len_frac:"1/8"},
+  {brand:"H. UPMANN",name:"PETIT CORONAS",ring:42,len_int:5,len_frac:"1/8"},
+
+
+  // ==============================
+  // HOYO DE MONTERREY
+  // ==============================
+
+  {brand:"HOYO DE MONTERREY",name:"DOUBLE CORONAS",ring:49,len_int:7,len_frac:"5/8"},
+  {brand:"HOYO DE MONTERREY",name:"EPICURE NO.1",ring:46,len_int:5,len_frac:"5/8"},
+  {brand:"HOYO DE MONTERREY",name:"EPICURE NO.2",ring:50,len_int:4,len_frac:"7/8"},
+  {brand:"HOYO DE MONTERREY",name:"EPICURE ESPECIAL",ring:50,len_int:5,len_frac:"5/8"},
+  {brand:"HOYO DE MONTERREY",name:"PETIT ROBUSTOS",ring:50,len_int:4,len_frac:"0"},
+  {brand:"HOYO DE MONTERREY",name:"LE HOYO DE RIO SECO",ring:56,len_int:5,len_frac:"7/8"},
+  {brand:"HOYO DE MONTERREY",name:"LE HOYO DE SAN JUAN",ring:54,len_int:5,len_frac:"7/8"},
+  {brand:"HOYO DE MONTERREY",name:"SAN JUAN",ring:54,len_int:5,len_frac:"7/8"},
+  {brand:"HOYO DE MONTERREY",name:"DEEPER",ring:50,len_int:6,len_frac:"1/8"},
+
+  // ==============================
+  // JOSE L. PIEDRA
+  // ==============================
+
+  {brand:"JOSE L. PIEDRA",name:"BREVAS",ring:42,len_int:5,len_frac:"1/4"},
+  {brand:"JOSE L. PIEDRA",name:"CAZADORES",ring:43,len_int:6,len_frac:"0"},
+  {brand:"JOSE L. PIEDRA",name:"CONSERVAS",ring:43,len_int:5,len_frac:"1/8"},
+  {brand:"JOSE L. PIEDRA",name:"CREMAS",ring:40,len_int:5,len_frac:"1/2"},
+  {brand:"JOSE L. PIEDRA",name:"NACIONALES",ring:42,len_int:5,len_frac:"1/2"},
+  {brand:"JOSE L. PIEDRA",name:"PETIT CABALLEROS",ring:40,len_int:4,len_frac:"1/2"},
+
+
+  // ==============================
+  // JUAN LOPEZ
+  // ==============================
+
+  {brand:"JUAN LOPEZ",name:"SELECCION NO.1",ring:46,len_int:6,len_frac:"5/8"},
+  {brand:"JUAN LOPEZ",name:"SELECCION NO.2",ring:50,len_int:5,len_frac:"1/8"},
+  {brand:"JUAN LOPEZ",name:"PETIT CORONAS",ring:42,len_int:5,len_frac:"1/8"},
+  {brand:"JUAN LOPEZ",name:"SELCCION SUPREMA",ring:54,len_int:6,len_frac:"1/2"},
+
+
+  // ==============================
+  // LA GLORIA CUBANA
+  // ==============================
+
+  {brand:"LA GLORIA CUBANA",name:"MEDAILLE D'OR NO.4",ring:42,len_int:5,len_frac:"5/8"},
+  {brand:"LA GLORIA CUBANA",name:"MEDAILLE D'OR NO.2",ring:48,len_int:6,len_frac:"1/8"},
+  {brand:"LA GLORIA CUBANA",name:"MEDAILLE D'OR NO.1",ring:46,len_int:6,len_frac:"5/8"},
+  {brand:"LA GLORIA CUBANA",name:"INVENCIBLES",ring:52,len_int:6,len_frac:"1/8"},
+
+
+  // ==============================
+  // MONTECRISTO
+  // ==============================
+
+  {brand:"MONTECRISTO",name:"NO.1",ring:42,len_int:6,len_frac:"5/8"},
+  {brand:"MONTECRISTO",name:"NO.2",ring:52,len_int:6,len_frac:"1/8"},
+  {brand:"MONTECRISTO",name:"NO.3",ring:42,len_int:5,len_frac:"5/8"},
+  {brand:"MONTECRISTO",name:"NO.4",ring:42,len_int:5,len_frac:"1/8"},
+  {brand:"MONTECRISTO",name:"NO.5",ring:40,len_int:4,len_frac:"0"},
+  {brand:"MONTECRISTO",name:"PETIT EDMUNDO",ring:52,len_int:4,len_frac:"3/8"},
+  {brand:"MONTECRISTO",name:"EDMUNDO",ring:52,len_int:5,len_frac:"3/8"},
+  {brand:"MONTECRISTO",name:"DOUBLE EDMUNDO",ring:50,len_int:6,len_frac:"1/8"},
+  {brand:"MONTECRISTO",name:"OPEN JUNIOR",ring:38,len_int:4,len_frac:"3/8"},
+  {brand:"MONTECRISTO",name:"OPEN MASTER",ring:50,len_int:4,len_frac:"7/8"},
+  {brand:"MONTECRISTO",name:"OPEN REGATA",ring:46,len_int:5,len_frac:"5/8"},
+  {brand:"MONTECRISTO",name:"LINEA 1935 MALTES",ring:53,len_int:6,len_frac:"1/2"},
+  {brand:"MONTECRISTO",name:"LINEA 1935 DUMAS",ring:49,len_int:6,len_frac:"1/2"},
+  {brand:"MONTECRISTO",name:"LINEA 1935 LEYENDA",ring:55,len_int:6,len_frac:"1/2"},
+
+
+  // ==============================
+  // PARTAGAS
+  // ==============================
+
+  {brand:"PARTAGAS",name:"LUSITANIAS",ring:49,len_int:7,len_frac:"5/8"},
+  {brand:"PARTAGAS",name:"SERIE D NO.4",ring:50,len_int:4,len_frac:"7/8"},
+  {brand:"PARTAGAS",name:"SERIE D NO.5",ring:50,len_int:4,len_frac:"3/8"},
+  {brand:"PARTAGAS",name:"SERIE P NO.2",ring:52,len_int:6,len_frac:"1/8"},
+  {brand:"PARTAGAS",name:"SERIE E NO.2",ring:54,len_int:5,len_frac:"1/2"},
+  {brand:"PARTAGAS",name:"SHORTS",ring:42,len_int:4,len_frac:"3/8"},
+  {brand:"PARTAGAS",name:"898",ring:43,len_int:6,len_frac:"3/4"},
+  {brand:"PARTAGAS",name:"PRESIDENTES",ring:47,len_int:6,len_frac:"1/2"},
+  {brand:"PARTAGAS",name:"CORONAS SENIOR",ring:42,len_int:6,len_frac:"1/8"},
+  {brand:"PARTAGAS",name:"MILLE FLEURS",ring:42,len_int:5,len_frac:"1/8"},
+
+
+  // ==============================
+  // POR LARRANAGA
+  // ==============================
+
+  {brand:"POR LARRANAGA",name:"PETIT CORONAS",ring:40,len_int:5,len_frac:"1/8"},
+  {brand:"POR LARRANAGA",name:"MONTECARLOS",ring:33,len_int:6,len_frac:"1/8"},
+  {brand:"POR LARRANAGA",name:"PANETELAS",ring:34,len_int:5,len_frac:"1/2"},
+  {brand:"POR LARRANAGA",name:"PICADORES",ring:49,len_int:6,len_frac:"1/8"},
+  {brand:"POR LARRANAGA",name:"GALANES",ring:52,len_int:5,len_frac:"1/2"},
+
+  // ==============================
+  // PUNCH
+  // ==============================
+
+  {brand:"PUNCH",name:"PUNCH PUNCH",ring:46,len_int:5,len_frac:"5/8"},
+  {brand:"PUNCH",name:"DOUBLE CORONAS",ring:49,len_int:7,len_frac:"5/8"},
+  {brand:"PUNCH",name:"PETIT CORONAS DEL PUNCH",ring:42,len_int:5,len_frac:"1/8"},
+  {brand:"PUNCH",name:"ROYAL SELECTION NO.11",ring:50,len_int:5,len_frac:"1/8"},
+  {brand:"PUNCH",name:"ROYAL SELECTION NO.12",ring:52,len_int:6,len_frac:"1/8"},
+  {brand:"PUNCH",name:"PUNCH SHORT DE PUNCH",ring:50,len_int:4,len_frac:"3/8"},
+
+
+  // ==============================
+  // QUAI D'ORSAY
+  // ==============================
+
+  {brand:"QUAI D'ORSAY",name:"CORONAS CLARO",ring:42,len_int:5,len_frac:"5/8"},
+  {brand:"QUAI D'ORSAY",name:"NO.50",ring:50,len_int:5,len_frac:"1/8"},
+  {brand:"QUAI D'ORSAY",name:"NO.52",ring:52,len_int:6,len_frac:"1/8"},
+  {brand:"QUAI D'ORSAY",name:"LAGUITO NO.1",ring:42,len_int:7,len_frac:"5/8"},
+  {brand:"QUAI D'ORSAY",name:"SOMBREROS",ring:40,len_int:6,len_frac:"1/2"},
+
+
+  // ==============================
+  // QUINTERO
+  // ==============================
+
+  {brand:"QUINTERO",name:"PANETELAS",ring:34,len_int:5,len_frac:"1/2"},
+  {brand:"QUINTERO",name:"BREVAS",ring:40,len_int:5,len_frac:"1/2"},
+  {brand:"QUINTERO",name:"FAVORITOS",ring:50,len_int:4,len_frac:"7/8"},
+  {brand:"QUINTERO",name:"LONDRES EXTRA",ring:40,len_int:6,len_frac:"1/2"},
+  {brand:"QUINTERO",name:"NACIONALES",ring:42,len_int:5,len_frac:"1/2"},
+
+
+  // ==============================
+  // RAFAEL GONZALEZ
+  // ==============================
+
+  {brand:"RAFAEL GONZALEZ",name:"PETIT CORONAS",ring:40,len_int:5,len_frac:"1/8"},
+  {brand:"RAFAEL GONZALEZ",name:"PANETELAS EXTRA",ring:37,len_int:5,len_frac:"1/2"},
+  {brand:"RAFAEL GONZALEZ",name:"PERLAS",ring:40,len_int:4,len_frac:"3/8"},
+  {brand:"RAFAEL GONZALEZ",name:"LONSDALES",ring:43,len_int:6,len_frac:"1/2"},
+  {brand:"RAFAEL GONZALEZ",name:"MILLE FLEURS",ring:42,len_int:5,len_frac:"1/8"},
+
+
+  // ==============================
+  // RAMON ALLONES
+  // ==============================
+
+  {brand:"RAMON ALLONES",name:"SPECIAL SELECTED",ring:50,len_int:4,len_frac:"7/8"},
+  {brand:"RAMON ALLONES",name:"SMALL CLUB CORONAS",ring:42,len_int:4,len_frac:"3/4"},
+  {brand:"RAMON ALLONES",name:"GIGANTES",ring:49,len_int:7,len_frac:"5/8"},
+  {brand:"RAMON ALLONES",name:"BELICOSOS",ring:52,len_int:5,len_frac:"1/2"},
+  {brand:"RAMON ALLONES",name:"ALLONES NO.2",ring:52,len_int:6,len_frac:"1/8"},
+
+
+  // ==============================
+  // ROMEO Y JULIETA
+  // ==============================
+
+  {brand:"ROMEO Y JULIETA",name:"CHURCHILLS",ring:47,len_int:7,len_frac:"0"},
+  {brand:"ROMEO Y JULIETA",name:"SHORT CHURCHILLS",ring:50,len_int:4,len_frac:"7/8"},
+  {brand:"ROMEO Y JULIETA",name:"PETIT CHURCHILLS",ring:50,len_int:4,len_frac:"0"},
+  {brand:"ROMEO Y JULIETA",name:"NO.1",ring:42,len_int:6,len_frac:"1/2"},
+  {brand:"ROMEO Y JULIETA",name:"NO.2",ring:52,len_int:6,len_frac:"1/8"},
+  {brand:"ROMEO Y JULIETA",name:"NO.3",ring:40,len_int:4,len_frac:"7/8"},
+  {brand:"ROMEO Y JULIETA",name:"EXHIBICION NO.4",ring:48,len_int:5,len_frac:"0"},
+  {brand:"ROMEO Y JULIETA",name:"WIDE CHURCHILLS",ring:55,len_int:5,len_frac:"1/8"},
+  {brand:"ROMEO Y JULIETA",name:"BELICOSOS",ring:52,len_int:5,len_frac:"1/2"},
+  {brand:"ROMEO Y JULIETA",name:"MILLE FLEURS",ring:42,len_int:5,len_frac:"1/8"},
+
+
+  // ==============================
+  // SAN CRISTOBAL DE LA HABANA
+  // ==============================
+
+  {brand:"SAN CRISTOBAL",name:"LA FUERZA",ring:50,len_int:5,len_frac:"1/2"},
+  {brand:"SAN CRISTOBAL",name:"LA PUNTA",ring:52,len_int:5,len_frac:"1/2"},
+  {brand:"SAN CRISTOBAL",name:"EL MORRO",ring:49,len_int:7,len_frac:"5/8"},
+  {brand:"SAN CRISTOBAL",name:"TORREON",ring:54,len_int:6,len_frac:"1/8"},
+  {brand:"SAN CRISTOBAL",name:"REVOLUCION",ring:54,len_int:6,len_frac:"1/8"},
+
+  // ==============================
+  // SAINT LUIS REY
+  // ==============================
+
+  {brand:"SAINT LUIS REY",name:"REGIOS",ring:52,len_int:5,len_frac:"1/2"},
+  {brand:"SAINT LUIS REY",name:"DOUBLE CORONAS",ring:49,len_int:7,len_frac:"5/8"},
+  {brand:"SAINT LUIS REY",name:"BELICOSOS",ring:52,len_int:5,len_frac:"1/2"},
+  {brand:"SAINT LUIS REY",name:"PETIT CORONAS",ring:40,len_int:5,len_frac:"1/8"},
+  {brand:"SAINT LUIS REY",name:"CORONAS",ring:42,len_int:5,len_frac:"5/8"},
+
+
+  // ==============================
+  // SANCHO PANZA
+  // ==============================
+
+  {brand:"SANCHO PANZA",name:"BELICOSOS",ring:52,len_int:5,len_frac:"1/2"},
+  {brand:"SANCHO PANZA",name:"DOUBLE CORONAS",ring:49,len_int:7,len_frac:"5/8"},
+  {brand:"SANCHO PANZA",name:"MOLINOS",ring:49,len_int:6,len_frac:"1/8"},
+  {brand:"SANCHO PANZA",name:"CORONAS",ring:42,len_int:5,len_frac:"5/8"},
+  {brand:"SANCHO PANZA",name:"NON PLUS",ring:42,len_int:6,len_frac:"1/2"},
+
+
+  // ==============================
+  // TRINIDAD
+  // ==============================
+
+  {brand:"TRINIDAD",name:"FUNDADORES",ring:40,len_int:7,len_frac:"1/2"},
+  {brand:"TRINIDAD",name:"REYES",ring:40,len_int:4,len_frac:"3/8"},
+  {brand:"TRINIDAD",name:"COLONIALES",ring:44,len_int:5,len_frac:"1/4"},
+  {brand:"TRINIDAD",name:"VIGIA",ring:54,len_int:4,len_frac:"3/8"},
+  {brand:"TRINIDAD",name:"TOPES",ring:56,len_int:4,len_frac:"7/8"},
+  {brand:"TRINIDAD",name:"MEDIA LUNA",ring:50,len_int:4,len_frac:"3/4"},
+  {brand:"TRINIDAD",name:"ESMERALDA",ring:53,len_int:5,len_frac:"3/4"},
+  {brand:"TRINIDAD",name:"CABILDOS",ring:49,len_int:6,len_frac:"1/2"},
+
+
+  // ==============================
+  // VEGAS ROBAINA
+  // ==============================
+
+  {brand:"VEGAS ROBAINA",name:"FAMOSOS",ring:50,len_int:6,len_frac:"1/8"},
+  {brand:"VEGAS ROBAINA",name:"CLASICOS",ring:47,len_int:6,len_frac:"5/8"},
+  {brand:"VEGAS ROBAINA",name:"DON ALEJANDRO",ring:52,len_int:7,len_frac:"1/8"},
+  {brand:"VEGAS ROBAINA",name:"UNICOS",ring:50,len_int:6,len_frac:"1/8"},
+  {brand:"VEGAS ROBAINA",name:"MAESTROS",ring:56,len_int:5,len_frac:"1/8"},
+
+
+  // ==============================
+  // VEGUEROS
+  // ==============================
+
+  {brand:"VEGUEROS",name:"MANANITAS",ring:46,len_int:4,len_frac:"0"},
+  {brand:"VEGUEROS",name:"ENTRETIEMPOS",ring:52,len_int:4,len_frac:"3/8"},
+  {brand:"VEGUEROS",name:"CENTROFINOS",ring:50,len_int:5,len_frac:"1/8"},
+  {brand:"VEGUEROS",name:"TAPADOS",ring:46,len_int:4,len_frac:"0"},
+  {brand:"VEGUEROS",name:"MAÑANITAS",ring:46,len_int:4,len_frac:"0"},
+
+  // ==============================
+  // AJ FERNANDEZ
+  // ==============================
+
+  {brand:"AJ FERNANDEZ",name:"NEW WORLD ROBUSTO",ring:52,len_int:5,len_frac:"1/4"},
+  {brand:"AJ FERNANDEZ",name:"NEW WORLD TORO",ring:55,len_int:6,len_frac:"0"},
+  {brand:"AJ FERNANDEZ",name:"NEW WORLD GIGANTE",ring:60,len_int:6,len_frac:"0"},
+  {brand:"AJ FERNANDEZ",name:"ENCLAVE ROBUSTO",ring:52,len_int:5,len_frac:"0"},
+  {brand:"AJ FERNANDEZ",name:"ENCLAVE TORO",ring:54,len_int:6,len_frac:"0"},
+  {brand:"AJ FERNANDEZ",name:"SAN LOTANO ROBUSTO",ring:50,len_int:5,len_frac:"0"},
+  {brand:"AJ FERNANDEZ",name:"SAN LOTANO TORO",ring:54,len_int:6,len_frac:"0"},
+  {brand:"AJ FERNANDEZ",name:"BELLAS ARTES ROBUSTO",ring:52,len_int:5,len_frac:"1/2"},
+  {brand:"AJ FERNANDEZ",name:"BELLAS ARTES TORO",ring:54,len_int:6,len_frac:"0"},
+  {brand:"AJ FERNANDEZ",name:"LAST CALL MADURO",ring:52,len_int:4,len_frac:"3/4"},
+
+
+  // ==============================
+  // ARTURO FUENTE
+  // ==============================
+
+  {brand:"ARTURO FUENTE",name:"HEMINGWAY SHORT STORY",ring:49,len_int:4,len_frac:"0"},
+  {brand:"ARTURO FUENTE",name:"HEMINGWAY BEST SELLER",ring:52,len_int:4,len_frac:"1/2"},
+  {brand:"ARTURO FUENTE",name:"HEMINGWAY WORK OF ART",ring:46,len_int:4,len_frac:"7/8"},
+  {brand:"ARTURO FUENTE",name:"DON CARLOS ROBUSTO",ring:50,len_int:5,len_frac:"1/4"},
+  {brand:"ARTURO FUENTE",name:"DON CARLOS BELICOSO",ring:55,len_int:6,len_frac:"1/8"},
+  {brand:"ARTURO FUENTE",name:"CHATEAU FUENTE KING B",ring:55,len_int:6,len_frac:"1/2"},
+  {brand:"ARTURO FUENTE",name:"OPUS X PERFECXION X",ring:48,len_int:6,len_frac:"1/4"},
+  {brand:"ARTURO FUENTE",name:"OPUS X DOUBLE CORONA",ring:49,len_int:7,len_frac:"0"},
+  {brand:"ARTURO FUENTE",name:"ANEJO NO.46",ring:46,len_int:5,len_frac:"5/8"},
+  {brand:"ARTURO FUENTE",name:"ANEJO NO.77 SHARK",ring:58,len_int:6,len_frac:"0"},
+
+
+  // ==============================
+  // ASHTON
+  // ==============================
+
+  {brand:"ASHTON",name:"CLASSIC ROBUSTO",ring:50,len_int:5,len_frac:"1/2"},
+  {brand:"ASHTON",name:"CLASSIC MAGNUM",ring:54,len_int:6,len_frac:"0"},
+  {brand:"ASHTON",name:"VSG ROBUSTO",ring:50,len_int:5,len_frac:"1/2"},
+  {brand:"ASHTON",name:"VSG TORO",ring:54,len_int:6,len_frac:"0"},
+  {brand:"ASHTON",name:"HERITAGE PUNO",ring:52,len_int:6,len_frac:"0"},
+
+
+  // ==============================
+  // CAO
+  // ==============================
+
+  {brand:"CAO",name:"MX2 ROBUSTO",ring:54,len_int:5,len_frac:"0"},
+  {brand:"CAO",name:"MX2 TORO",ring:54,len_int:6,len_frac:"0"},
+  {brand:"CAO",name:"BRAZILIA SAMBA",ring:54,len_int:6,len_frac:"0"},
+  {brand:"CAO",name:"ITALIA CAVALLO",ring:56,len_int:6,len_frac:"0"},
+  {brand:"CAO",name:"L'ANNIVERSAIRE ROBUSTO",ring:52,len_int:5,len_frac:"0"},
+  {brand:"CAO",name:"FLAVOR TORO",ring:54,len_int:6,len_frac:"0"},
+
+
+  // ==============================
+  // DAVIDOFF
+  // ==============================
+
+  {brand:"DAVIDOFF",name:"SIGNATURE 2000",ring:43,len_int:5,len_frac:"0"},
+  {brand:"DAVIDOFF",name:"SIGNATURE NO.2",ring:38,len_int:6,len_frac:"0"},
+  {brand:"DAVIDOFF",name:"SIGNATURE NO.3",ring:46,len_int:6,len_frac:"0"},
+  {brand:"DAVIDOFF",name:"ANIVERSARIO SPECIAL R",ring:50,len_int:6,len_frac:"0"},
+  {brand:"DAVIDOFF",name:"ANIVERSARIO NO.3",ring:50,len_int:5,len_frac:"0"},
+  {brand:"DAVIDOFF",name:"NICARAGUA ROBUSTO",ring:50,len_int:5,len_frac:"0"},
+  {brand:"DAVIDOFF",name:"NICARAGUA TORO",ring:54,len_int:5,len_frac:"1/2"},
+  {brand:"DAVIDOFF",name:"YAMASA ROBUSTO",ring:50,len_int:5,len_frac:"0"},
+  {brand:"DAVIDOFF",name:"YAMASA TORO",ring:54,len_int:6,len_frac:"0"},
+  {brand:"DAVIDOFF",name:"LATE HOUR TORO",ring:54,len_int:6,len_frac:"0"},
+
+
+  // ==============================
+  // DON PEPIN GARCIA
+  // ==============================
+
+  {brand:"DON PEPIN GARCIA",name:"BLUE LABEL ROBUSTO",ring:50,len_int:5,len_frac:"0"},
+  {brand:"DON PEPIN GARCIA",name:"BLUE LABEL TORO",ring:52,len_int:6,len_frac:"0"},
+  {brand:"DON PEPIN GARCIA",name:"BLACK LABEL ROBUSTO",ring:50,len_int:5,len_frac:"0"},
+  {brand:"DON PEPIN GARCIA",name:"BLACK LABEL TORO",ring:54,len_int:6,len_frac:"0"},
+  {brand:"DON PEPIN GARCIA",name:"MY FATHER LE BIJOU ROBUSTO",ring:50,len_int:5,len_frac:"0"},
+
+
+  // ==============================
+  // DREW ESTATE
+  // ==============================
+
+  {brand:"DREW ESTATE",name:"LIGA PRIVADA NO.9 ROBUSTO",ring:52,len_int:5,len_frac:"0"},
+  {brand:"DREW ESTATE",name:"LIGA PRIVADA NO.9 TORO",ring:52,len_int:6,len_frac:"0"},
+  {brand:"DREW ESTATE",name:"LIGA PRIVADA T52 ROBUSTO",ring:52,len_int:5,len_frac:"0"},
+  {brand:"DREW ESTATE",name:"LIGA PRIVADA T52 TORO",ring:52,len_int:6,len_frac:"0"},
+  {brand:"DREW ESTATE",name:"UNDERCROWN MADURO ROBUSTO",ring:54,len_int:5,len_frac:"0"},
+  {brand:"DREW ESTATE",name:"UNDERCROWN SHADE ROBUSTO",ring:54,len_int:5,len_frac:"0"},
+
+  // ==============================
+  // MY FATHER
+  // ==============================
+
+  {brand:"MY FATHER",name:"LE BIJOU 1922 PETIT ROBUSTO",ring:50,len_int:4,len_frac:"1/2"},
+  {brand:"MY FATHER",name:"LE BIJOU 1922 ROBUSTO GRANDE",ring:52,len_int:5,len_frac:"5/8"},
+  {brand:"MY FATHER",name:"LE BIJOU 1922 TORO",ring:52,len_int:6,len_frac:"0"},
+  {brand:"MY FATHER",name:"THE JUDGE GRAND ROBUSTO",ring:60,len_int:5,len_frac:"0"},
+  {brand:"MY FATHER",name:"THE JUDGE TORO",ring:56,len_int:6,len_frac:"0"},
+  {brand:"MY FATHER",name:"FLOR DE LAS ANTILLAS PETIT ROBUSTO",ring:50,len_int:4,len_frac:"1/2"},
+  {brand:"MY FATHER",name:"FLOR DE LAS ANTILLAS TORO",ring:52,len_int:6,len_frac:"0"},
+  {brand:"MY FATHER",name:"LA OPULENCIA ROBUSTO",ring:50,len_int:5,len_frac:"0"},
+  {brand:"MY FATHER",name:"LA OPULENCIA TORO",ring:52,len_int:6,len_frac:"0"},
+  {brand:"MY FATHER",name:"JAIME GARCIA RESERVA ESPECIAL ROBUSTO",ring:52,len_int:5,len_frac:"1/2"},
+
+
+  // ==============================
+  // OLIVA
+  // ==============================
+
+  {brand:"OLIVA",name:"SERIE G ROBUSTO",ring:50,len_int:5,len_frac:"0"},
+  {brand:"OLIVA",name:"SERIE G TORO",ring:54,len_int:6,len_frac:"0"},
+  {brand:"OLIVA",name:"SERIE O ROBUSTO",ring:50,len_int:5,len_frac:"0"},
+  {brand:"OLIVA",name:"SERIE O TORO",ring:50,len_int:6,len_frac:"0"},
+  {brand:"OLIVA",name:"SERIE V ROBUSTO",ring:50,len_int:5,len_frac:"0"},
+  {brand:"OLIVA",name:"SERIE V TORO",ring:54,len_int:6,len_frac:"0"},
+  {brand:"OLIVA",name:"SERIE V MELANIO ROBUSTO",ring:52,len_int:5,len_frac:"0"},
+  {brand:"OLIVA",name:"SERIE V MELANIO TORO",ring:54,len_int:6,len_frac:"0"},
+  {brand:"OLIVA",name:"SERIE V MELANIO DOUBLE TORO",ring:60,len_int:6,len_frac:"0"},
+  {brand:"OLIVA",name:"MASTER BLENDS 3 ROBUSTO",ring:50,len_int:5,len_frac:"0"},
+  {brand:"OLIVA",name:"MASTER BLENDS 3 TORO",ring:52,len_int:6,len_frac:"0"},
+  {brand:"OLIVA",name:"CONNECTICUT RESERVE TORO",ring:50,len_int:6,len_frac:"0"},
+
+
+  // ==============================
+  // PADRON
+  // ==============================
+
+  {brand:"PADRON",name:"2000 NATURAL",ring:50,len_int:5,len_frac:"0"},
+  {brand:"PADRON",name:"2000 MADURO",ring:50,len_int:5,len_frac:"0"},
+  {brand:"PADRON",name:"3000 NATURAL",ring:52,len_int:5,len_frac:"1/2"},
+  {brand:"PADRON",name:"3000 MADURO",ring:52,len_int:5,len_frac:"1/2"},
+  {brand:"PADRON",name:"4000 NATURAL",ring:54,len_int:6,len_frac:"1/2"},
+  {brand:"PADRON",name:"4000 MADURO",ring:54,len_int:6,len_frac:"1/2"},
+  {brand:"PADRON",name:"5000 NATURAL",ring:56,len_int:5,len_frac:"1/2"},
+  {brand:"PADRON",name:"5000 MADURO",ring:56,len_int:5,len_frac:"1/2"},
+  {brand:"PADRON",name:"6000 NATURAL",ring:60,len_int:6,len_frac:"0"},
+  {brand:"PADRON",name:"6000 MADURO",ring:60,len_int:6,len_frac:"0"},
+  {brand:"PADRON",name:"1964 ANNIVERSARY EXCLUSIVO",ring:50,len_int:5,len_frac:"1/2"},
+  {brand:"PADRON",name:"1964 ANNIVERSARY IMPERIAL",ring:54,len_int:6,len_frac:"0"},
+  {brand:"PADRON",name:"1964 ANNIVERSARY TORPEDO",ring:54,len_int:6,len_frac:"0"},
+  {brand:"PADRON",name:"1926 NO.35",ring:48,len_int:4,len_frac:"0"},
+  {brand:"PADRON",name:"1926 NO.47",ring:50,len_int:5,len_frac:"0"},
+  {brand:"PADRON",name:"1926 NO.48",ring:54,len_int:5,len_frac:"0"},
+  {brand:"PADRON",name:"1926 NO.90",ring:52,len_int:5,len_frac:"1/2"},
+  {brand:"PADRON",name:"1926 NO.95",ring:60,len_int:5,len_frac:"1/4"},
+
+
+  // ==============================
+  // PLASENCIA
+  // ==============================
+
+  {brand:"PLASENCIA",name:"ALMA DEL CAMPO TRIBU",ring:52,len_int:5,len_frac:"0"},
+  {brand:"PLASENCIA",name:"ALMA DEL CAMPO GUIJON",ring:54,len_int:6,len_frac:"0"},
+  {brand:"PLASENCIA",name:"ALMA DEL FUEGO CONCEPCION",ring:50,len_int:6,len_frac:"0"},
+  {brand:"PLASENCIA",name:"ALMA FUERTE ROBUSTUS II",ring:55,len_int:5,len_frac:"1/4"},
+  {brand:"PLASENCIA",name:"ALMA FUERTE SIXTO I",ring:60,len_int:6,len_frac:"0"},
+  {brand:"PLASENCIA",name:"RESERVA ORIGINAL ROBUSTO",ring:50,len_int:5,len_frac:"0"},
+
+
+  // ==============================
+  // PERDOMO
+  // ==============================
+
+  {brand:"PERDOMO",name:"20TH ANNIVERSARY ROBUSTO",ring:50,len_int:5,len_frac:"0"},
+  {brand:"PERDOMO",name:"20TH ANNIVERSARY TORO",ring:54,len_int:6,len_frac:"0"},
+  {brand:"PERDOMO",name:"10TH ANNIVERSARY CHURCHILL",ring:50,len_int:7,len_frac:"0"},
+  {brand:"PERDOMO",name:"RESERVE 10TH ANNIVERSARY ROBUSTO",ring:50,len_int:5,len_frac:"0"},
+  {brand:"PERDOMO",name:"EDICION DE SILVIO TORO",ring:54,len_int:6,len_frac:"0"},
+
+  // ==============================
+  // ROCKY PATEL
+  // ==============================
+
+  {brand:"ROCKY PATEL",name:"VINTAGE 1990 ROBUSTO",ring:50,len_int:5,len_frac:"1/2"},
+  {brand:"ROCKY PATEL",name:"VINTAGE 1990 TORO",ring:50,len_int:6,len_frac:"1/2"},
+  {brand:"ROCKY PATEL",name:"VINTAGE 1999 ROBUSTO",ring:50,len_int:5,len_frac:"1/2"},
+  {brand:"ROCKY PATEL",name:"VINTAGE 1999 TORO",ring:50,len_int:6,len_frac:"1/2"},
+  {brand:"ROCKY PATEL",name:"OLD WORLD RESERVE ROBUSTO",ring:50,len_int:5,len_frac:"0"},
+  {brand:"ROCKY PATEL",name:"DECADA ROBUSTO",ring:50,len_int:5,len_frac:"0"},
+  {brand:"ROCKY PATEL",name:"DECADA TORO",ring:52,len_int:6,len_frac:"0"},
+  {brand:"ROCKY PATEL",name:"THE EDGE ROBUSTO",ring:52,len_int:5,len_frac:"0"},
+
+
+  // ==============================
+  // E.P. CARRILLO
+  // ==============================
+
+  {brand:"E.P. CARRILLO",name:"LA HISTORIA E-III",ring:54,len_int:6,len_frac:"0"},
+  {brand:"E.P. CARRILLO",name:"LA HISTORIA E-IV",ring:58,len_int:6,len_frac:"0"},
+  {brand:"E.P. CARRILLO",name:"ENCORE MAJESTIC",ring:52,len_int:5,len_frac:"5/8"},
+  {brand:"E.P. CARRILLO",name:"ENCORE VALIENTE",ring:52,len_int:6,len_frac:"0"},
+  {brand:"E.P. CARRILLO",name:"PLEDGE PREQUEL",ring:52,len_int:5,len_frac:"0"},
+  {brand:"E.P. CARRILLO",name:"PLEDGE LONSDALE",ring:46,len_int:6,len_frac:"1/2"},
+
+
+  // ==============================
+  // FOUNDATION CIGAR
+  // ==============================
+
+  {brand:"FOUNDATION",name:"TABERNACLE ROBUSTO",ring:52,len_int:5,len_frac:"0"},
+  {brand:"FOUNDATION",name:"TABERNACLE TORO",ring:54,len_int:6,len_frac:"0"},
+  {brand:"FOUNDATION",name:"CROWNED HEADS TABERNACLE",ring:52,len_int:5,len_frac:"0"},
+  {brand:"FOUNDATION",name:"HIGH CLERE CASTLE ROBUSTO",ring:50,len_int:5,len_frac:"0"},
+  {brand:"FOUNDATION",name:"HIGH CLERE CASTLE TORO",ring:52,len_int:6,len_frac:"0"},
+
+
+  // ==============================
+  // LA FLOR DOMINICANA
+  // ==============================
+
+  {brand:"LA FLOR DOMINICANA",name:"LIGERO ROBUSTO",ring:52,len_int:5,len_frac:"0"},
+  {brand:"LA FLOR DOMINICANA",name:"LIGERO TORO",ring:54,len_int:6,len_frac:"0"},
+  {brand:"LA FLOR DOMINICANA",name:"ANDALUSIAN BULL",ring:64,len_int:6,len_frac:"0"},
+  {brand:"LA FLOR DOMINICANA",name:"DOUBLE LIGERO CHISEL",ring:60,len_int:6,len_frac:"0"},
+
+
+  // ==============================
+  // CROWNED HEADS
+  // ==============================
+
+  {brand:"CROWNED HEADS",name:"FOUR KICKS ROBUSTO",ring:50,len_int:5,len_frac:"0"},
+  {brand:"CROWNED HEADS",name:"FOUR KICKS TORO",ring:52,len_int:6,len_frac:"0"},
+  {brand:"CROWNED HEADS",name:"MIL DIAS ROBUSTO",ring:50,len_int:5,len_frac:"0"},
+  {brand:"CROWNED HEADS",name:"MIL DIAS TORO",ring:52,len_int:6,len_frac:"0"},
+  {brand:"CROWNED HEADS",name:"LE CAREME ROBUSTO",ring:52,len_int:5,len_frac:"0"},
+
+
+  // ==============================
+  // J.C. NEWMAN
+  // ==============================
+
+  {brand:"J.C. NEWMAN",name:"EPICUREAN",ring:50,len_int:5,len_frac:"0"},
+  {brand:"J.C. NEWMAN",name:"BRICK HOUSE ROBUSTO",ring:54,len_int:5,len_frac:"0"},
+  {brand:"J.C. NEWMAN",name:"BRICK HOUSE TORO",ring:56,len_int:6,len_frac:"0"},
+  {brand:"J.C. NEWMAN",name:"DIAMOND CROWN ROBUSTO",ring:54,len_int:5,len_frac:"0"},
+
+
+  // ==============================
+  // NUB
+  // ==============================
+
+  {brand:"NUB",name:"460 CONNECTICUT",ring:60,len_int:4,len_frac:"0"},
+  {brand:"NUB",name:"460 CAMEROON",ring:60,len_int:4,len_frac:"0"},
+  {brand:"NUB",name:"460 HABANO",ring:60,len_int:4,len_frac:"0"},
+  {brand:"NUB",name:"466 MADURO",ring:66,len_int:4,len_frac:"0"},
+  {brand:"NUB",name:"560 TORO",ring:60,len_int:5,len_frac:"0"},
+
+
+  // ==============================
+  // FINAL
+  // ==============================
+
+];
+
+const fracMap = {"0":"","1/8":"⅛","1/4":"¼","3/8":"⅜","1/2":"½","5/8":"⅝","3/4":"¾","7/8":"⅞"};
+const fracNumMap = {"0":0,"1/8":0.125,"1/4":0.25,"3/8":0.375,"1/2":0.5,"5/8":0.625,"3/4":0.75,"7/8":0.875};
+
+
+// 古巴品牌判定字典
+
+const CUBAN_BRANDS = new Set([
+  "BOLIVAR","COHIBA","CUABA","DIPLOMATICOS","EL REY DEL MUNDO","FONSECA",
+  "H. UPMANN","HOYO DE MONTERREY","JOSE L. PIEDRA","JUAN LOPEZ",
+  "LA GLORIA CUBANA","MONTECRISTO","PARTAGAS","POR LARRANAGA","PUNCH",
+  "QUAI D'ORSAY","QUINTERO","RAFAEL GONZALEZ","RAMON ALLONES",
+  "ROMEO Y JULIETA","SAN CRISTOBAL","SAINT LUIS REY","SANCHO PANZA",
+  "TRINIDAD","VEGAS ROBAINA","VEGUEROS"
+]);
+function isCuban(brand) { return CUBAN_BRANDS.has((brand||"").toUpperCase()); }
+function cubanLabel(brand) { return isCuban(brand) ? "古巴雪茄（Habanos）" : "非古雪茄（Non-Cuban）"; }
+
+
+// 品牌中文名字典
+
+const CN_BRAND = {
+  "BOLIVAR":"玻利瓦尔","COHIBA":"高希霸","CUABA":"库瓦","DIPLOMATICOS":"帝伯乐",
+  "EL REY DEL MUNDO":"世界之王","FONSECA":"芳斯卡","H. UPMANN":"乌普曼",
+  "HOYO DE MONTERREY":"好友世家","JOSE L. PIEDRA":"何塞·皮德拉","JUAN LOPEZ":"胡安·洛佩兹",
+  "LA GLORIA CUBANA":"古巴荣耀","MONTECRISTO":"蒙特克里斯托","PARTAGAS":"帕特加斯",
+  "POR LARRANAGA":"拉拉纳加","PUNCH":"潘趣","QUAI D'ORSAY":"奥赛码头","QUINTERO":"昆特罗",
+  "RAFAEL GONZALEZ":"拉斐尔·冈萨雷斯","RAMON ALLONES":"雷蒙·阿隆内斯",
+  "ROMEO Y JULIETA":"罗密欧与朱丽叶","SAN CRISTOBAL":"圣克里斯托巴尔",
+  "SAINT LUIS REY":"圣路易斯雷","SANCHO PANZA":"桑丘·潘沙","TRINIDAD":"千里达",
+  "VEGAS ROBAINA":"罗百纳","VEGUEROS":"维格罗斯",
+  "AJ FERNANDEZ":"AJ费尔南德斯","ARTURO FUENTE":"阿图罗·芬特","ASHTON":"阿仕顿",
+  "CAO":"卡奥","DAVIDOFF":"大卫杜夫","DON PEPIN GARCIA":"佩平大师",
+  "DREW ESTATE":"卓越庄园","MY FATHER":"我父亲","OLIVA":"奥利瓦","PADRON":"帕德龙",
+  "PLASENCIA":"普拉森西亚","PERDOMO":"佩尔多莫","ROCKY PATEL":"洛基·帕特尔",
+  "E.P. CARRILLO":"卡里洛","FOUNDATION":"基石","LA FLOR DOMINICANA":"多米尼加之花",
+  "CROWNED HEADS":"加冕之首","J.C. NEWMAN":"纽曼","NUB":"努布"
+};
+function cnBrandName(brand) { return CN_BRAND[(brand||"").toUpperCase()] || ""; }
+
+const CN_TERM_PAIRS = [
+  ["DOUBLE CORONAS","大皇冠"],["DOUBLE CORONA","大皇冠"],["PETIT CORONAS","小皇冠"],
+  ["PETIT CORONA","小皇冠"],["HALF CORONA","半支皇冠"],["CORONAS ESPECIALES","特级皇冠"],
+  ["CORONAS EXTRA","加长皇冠"],["CORONAS SENIOR","特级皇冠"],["CORONAS JUNIOR","小号皇冠"],
+  ["CORONAS DE LUXE","豪华皇冠"],["CORONAS CLARO","浅色皇冠"],["SMALL CLUB CORONAS","小型俱乐部皇冠"],
+  ["SHORT CHURCHILLS","短丘吉尔"],["PETIT CHURCHILLS","小丘吉尔"],["WIDE CHURCHILLS","宽体丘吉尔"],
+  ["PETIT ROBUSTOS","小罗布图"],["PETIT ROBUSTO","小罗布图"],["PIRAMIDES EXTRA","加长金字塔"],
+  ["PANETELAS EXTRA","加长巴拿泰拉"],["MEDIO SIGLO","半世纪"],["SIR WINSTON","温斯顿爵士"],
+  ["ROBUSTO GRANDE","大号罗布图"],["DOUBLE TORO","双托罗"],["DOUBLE LIGERO","双浓郁"],
+  ["ROYAL SELECTION","皇家精选"],["SPECIAL SELECTED","特级精选"],["OPEN JUNIOR","小号系列"],
+  ["OPEN MASTER","大师系列"],["OPEN REGATA","赛艇系列"],
+  ["ROBUSTOS","罗布图"],["ROBUSTO","罗布图"],["TOROS","托罗"],["TORO","托罗"],
+  ["CHURCHILLS","丘吉尔"],["CHURCHILL","丘吉尔"],["CORONAS","皇冠"],["CORONA","皇冠"],
+  ["PANETELAS","巴拿泰拉"],["PANETELA","巴拿泰拉"],["LANCEROS","兰斯洛"],["LANCERO","兰斯洛"],
+  ["PIRAMIDES","金字塔"],["PIRAMIDE","金字塔"],["BELICOSOS","贝利科索"],["BELICOSO","贝利科索"],
+  ["TORPEDO","鱼雷型"],["MAGNUM","马格南"],["GIGANTE","巨人号"],["GIGANTES","巨人号"],
+  ["ESPLENDIDOS","辉煌款"],["EXQUISITOS","精致款"],["LONSDALES","朗斯代尔"],["LONSDALE","朗斯代尔"],
+  ["BREVAS","布雷瓦"],["BREVA","布雷瓦"],["PERLAS","珍珠款"],["SOMBREROS","宽帽款"],
+  ["FAVORITOS","至爱款"],["NACIONALES","国民款"],["SIGLO","世纪"],["BEHIKE","贝喜克"],
+  ["PETIT","小号"],["DOUBLE","双倍"],["SHORT","短款"],["EXTRA","加长"],["ESPECIAL","特别版"],
+  ["ANEJO","陈年"],["NATURAL","天然装"],["MADURO","玛杜罗（深色）"],["CONNECTICUT","康涅狄格"],
+  ["GRANDE","大号"],["RESERVA","珍藏"],["RESERVE","珍藏"],["ANNIVERSARY","周年纪念"],
+  ["VINTAGE","年份"],["EDICION","限量版"],["LIMITED","限量版"]
+];
+function cnVitolaGuess(name) {
+  if (!name) return "";
+  let n = " " + name.toUpperCase() + " ";
+  let matched = false;
+  CN_TERM_PAIRS.forEach(([en, cn]) => {
+    const re = new RegExp("\\b" + en.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "\\b", "g");
+    if (re.test(n)) { matched = true; n = n.replace(re, cn); }
+  });
+  return matched ? n.trim().replace(/\s+/g, " ") : "";
+}
+function getCnDisplay(item) {
+  const brandCn = cnBrandName(item.brand);
+  const nameCn = cnVitolaGuess(item.name);
+  if (!brandCn && !nameCn) return "";
+  return (brandCn || item.brand) + (nameCn ? " " + nameCn : "");
+}
+
+
+// 中文查询
+
+const CN_BRAND_REVERSE = Object.entries(CN_BRAND)
+  .map(([en, cn]) => [cn, en])
+  .sort((a, b) => b[0].length - a[0].length); // 优先匹配长中文名
+
+const CN_TERM_REVERSE = (() => {
+  const groups = {};
+  CN_TERM_PAIRS.forEach(([en, cn]) => {
+    if (!groups[cn] || en.length < groups[cn].length) groups[cn] = en;
+  });
+  return Object.entries(groups)
+    .map(([cn, en]) => [cn, en])
+    .sort((a, b) => b[0].length - a[0].length);
+})();
+
+const CN_DIGIT_MAP = {"零":0,"一":1,"二":2,"两":2,"三":3,"四":4,"五":5,"六":6,"七":7,"八":8,"九":9};
+function cnNumberToArabic(s) {
+  if (!s) return null;
+  if (s.length === 1) {
+    if (s === "十") return 10;
+    return CN_DIGIT_MAP[s] !== undefined ? CN_DIGIT_MAP[s] : null;
+  }
+  const tenIdx = s.indexOf("十");
+  if (tenIdx === -1) {
+    return null;
+  }
+  const tensDigit = tenIdx === 0 ? 1 : (CN_DIGIT_MAP[s[tenIdx - 1]] !== undefined ? CN_DIGIT_MAP[s[tenIdx - 1]] : 1);
+  const rest = s.slice(tenIdx + 1);
+  const onesDigit = rest ? (CN_DIGIT_MAP[rest] !== undefined ? CN_DIGIT_MAP[rest] : 0) : 0;
+  return tensDigit * 10 + onesDigit;
+}
+
+function translateChineseQuery(rawQuery) {
+  let q = " " + rawQuery + " ";
+  // 1. 中文品牌名 -> 英文品牌名
+  CN_BRAND_REVERSE.forEach(([cn, en]) => {
+    if (q.includes(cn)) q = q.split(cn).join(" " + en + " ");
+  });
+  // 2. 中文规格/型号词 -> 英文关键词
+  CN_TERM_REVERSE.forEach(([cn, en]) => {
+    if (q.includes(cn)) q = q.split(cn).join(" " + en + " ");
+  });
+  // 3. 剩余的中文数字-> 阿拉伯数字
+  q = q.replace(/[零一二两三四五六七八九十]+/g, (m) => {
+    const v = cnNumberToArabic(m);
+    return v !== null ? " " + v + " " : m;
+  });
+  // 4. 清理仍未识别的中文字符
+  q = q.replace(/[\u4e00-\u9fa5]+/g, " ");
+  return q.replace(/\s+/g, " ").trim();
+}
+
+function buildSearchQuery(rawQuery) {
+  if (/[\u4e00-\u9fa5]/.test(rawQuery)) {
+    return translateChineseQuery(rawQuery);
+  }
+  return rawQuery;
+}
+
+
+// 模糊匹配
+
+function normStr(s) { return (s || "").toUpperCase().replace(/[^A-Z0-9]/g, ""); }
+function levenshtein(a, b) {
+  const m = a.length, n = b.length;
+  if (m === 0) return n;
+  if (n === 0) return m;
+  const dp = Array.from({length: m + 1}, () => new Array(n + 1).fill(0));
+  for (let i = 0; i <= m; i++) dp[i][0] = i;
+  for (let j = 0; j <= n; j++) dp[0][j] = j;
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      dp[i][j] = a[i-1] === b[j-1] ? dp[i-1][j-1] : 1 + Math.min(dp[i-1][j-1], dp[i-1][j], dp[i][j-1]);
+    }
+  }
+  return dp[m][n];
+}
+function textSimilarity(a, b) {
+  const na = normStr(a), nb = normStr(b);
+  if (!na || !nb) return 0;
+  const dist = levenshtein(na, nb);
+  return 1 - dist / Math.max(na.length, nb.length);
+}
+
+
+function romanToArabicVal(token) {
+  const map = {I:1,V:5,X:10,L:50,C:100};
+  let total = 0, prev = 0;
+  for (let i = token.length - 1; i >= 0; i--) {
+    const val = map[token[i]];
+    if (val === undefined) return null;
+    if (val < prev) total -= val; else { total += val; prev = val; }
+  }
+  return total;
+}
+function toRomanMatchKey(text) {
+  return text.split(/\s+/).map(tok => {
+    const clean = tok.replace(/[^A-Za-z]/g, "");
+    if (clean && clean.length <= 5 && /^[IVXivx]+$/.test(clean)) {
+      const val = romanToArabicVal(clean.toUpperCase());
+      if (val && val > 0 && val < 50) return tok.replace(new RegExp(clean, "i"), String(val));
+    }
+    return tok;
+  }).join(" ");
+}
+
+function singleTargetScore(nq, target) {
+  const nt = normStr(target);
+  if (!nt) return 0;
+  if (nt.includes(nq)) return 0.9 + 0.1 * (nq.length / Math.max(nt.length, 1));
+  return 0; 
+}
+
+function fuzzyScore(query, target, matchKey) {
+  const nq = normStr(query);
+  if (!nq) return 0;
+  const nt = normStr(target);
+
+  // 子串命中
+  let subScore = singleTargetScore(nq, target);
+  if (matchKey) subScore = Math.max(subScore, singleTargetScore(nq, matchKey));
+  if (subScore > 0) return subScore;
+
+  const qTokens = query.toUpperCase().split(/\s+/).filter(Boolean);
+  let hits = 0;
+  qTokens.forEach(t => {
+    if (!t) return;
+    const nTok = normStr(t);
+    if (nt.includes(nTok) || (matchKey && normStr(matchKey).includes(nTok))) hits++;
+  });
+  const tokenScore = qTokens.length ? hits / qTokens.length : 0;
+  const lev = Math.max(textSimilarity(nq, nt), matchKey ? textSimilarity(nq, matchKey) : 0);
+  return Math.max(tokenScore * 0.85, lev);
+}
+function findTopMatches(query, limit, minScore) {
+  if (!query || !query.trim()) return [];
+  const searchQuery = buildSearchQuery(query);
+  if (!searchQuery) return [];
+  const scored = DB.map(item => ({
+    item,
+    score: fuzzyScore(searchQuery, item.brand + " " + item.name, item.matchKey)
+  })).filter(x => x.score >= (minScore != null ? minScore : 0.35));
+  scored.sort((a, b) => b.score - a.score);
+  return scored.slice(0, limit || 20).map(x => x.item);
+}
+
+function toggleCustomInput(selectId, customInputId) {
+  const selectEl = document.getElementById(selectId);
+  const customEl = document.getElementById(customInputId);
+  if (selectEl.value === "__CUSTOM__") {
+    customEl.style.display = "inline-block";
+    customEl.focus();
+  } else {
+    customEl.style.display = "none";
+    customEl.value = "";
+  }
+}
+
+function getSelectedValue(selectId, customInputId) {
+  const selectEl = document.getElementById(selectId);
+  if (selectEl.value === "__CUSTOM__") {
+    return document.getElementById(customInputId).value.trim();
+  }
+  return selectEl.value;
+}
+
+function getPureLenStr(intVal, fracKey) {
+  const f = fracMap[fracKey] || "";
+  return intVal + f + '"';
+}
+
+function buildPureFormat(brand, name, ring, lenInt, lenFrac) {
+  const lenStr = getPureLenStr(lenInt, lenFrac);
+  const b = (brand || "").trim();
+  const n = (name || "").trim();
+  const dims = `${ring} × ${lenStr}`;
+  if (b && n) return `${b}(${n} ${dims})`;
+  if (b && !n) return `${b}(${dims})`;
+  if (!b && n) return `(${n} ${dims})`;
+  return `(${dims})`;
+}
+
+function getUnique(arr) { return [...new Set(arr)].sort(); }
+function getRings() { return getUnique(DB.map(d => d.ring)).sort((a,b)=>a-b); }
+function getBrands() { return getUnique(DB.map(d => d.brand)); }
+
+function fillSelect(el, vals, labelFn) {
+  const cur = el.value;
+  while(el.options.length > 1) el.remove(1);
+  vals.forEach(v => {
+    const o = document.createElement('option');
+    o.value = v;
+    o.text = labelFn ? labelFn(v) : v;
+    el.appendChild(o);
+  });
+  const oCustom = document.createElement('option');
+  oCustom.value = "__CUSTOM__";
+  oCustom.text = "自定义输入...";
+  el.appendChild(oCustom);
+  if(cur) el.value = cur;
+}
+
+function initSelects() {
+  const brands = getBrands();
+  fillSelect(document.getElementById('fw-brand'), brands);
+  fillSelect(document.getElementById('rv-brand'), brands);
+  const rings = getRings();
+  fillSelect(document.getElementById('rv-ring'), rings);
+  fillSelect(document.getElementById('inp-ring'), rings);
+}
+
+function updateFwModels() {
+  const brand = document.getElementById('fw-brand').value;
+  const models = DB.filter(d => d.brand === brand).map(d => d.name);
+  const el = document.getElementById('fw-model');
+  while(el.options.length > 1) el.remove(1);
+  models.forEach(v => {
+    const o = document.createElement('option');
+    o.value = v; o.text = v; el.appendChild(o);
+  });
+  document.getElementById('fw-result').classList.remove('show');
+}
+
+function showForwardResult() {
+  const brand = document.getElementById('fw-brand').value;
+  const name = document.getElementById('fw-model').value;
+  if(!brand || !name) return;
+  const item = DB.find(d => d.brand === brand && d.name === name);
+  if(!item) return;
+  renderFwResult(item);
+}
+
+function renderFwResult(item) {
+  currentFwItem = item;
+  document.getElementById('fw-name').textContent = item.brand + ' ' + item.name;
+  document.getElementById('fw-ring').textContent = item.ring;
+  document.getElementById('fw-len').textContent = getPureLenStr(item.len_int, item.len_frac);
+
+  const finalFormat = buildPureFormat(item.brand, item.name, item.ring, item.len_int, item.len_frac);
+  document.getElementById('fw-copy-text').textContent = finalFormat;
+
+  const cnDisplay = getCnDisplay(item);
+  const badge = cubanLabel(item.brand);
+  let extra = `<div class="cuban-badge ${isCuban(item.brand) ? 'cuban' : 'nc'}">${badge}</div>`;
+  extra += `<div class="cn-name">常用中文名（参考译名）：${cnDisplay || '暂无对应中文俗名'}</div>`;
+  document.getElementById('fw-extra-info').innerHTML = extra;
+
+  document.getElementById('fw-result').classList.add('show');
+}
+
+function doFwFuzzySearch() {
+  const q = document.getElementById('fw-search').value;
+  const list = document.getElementById('fw-search-list');
+  list.innerHTML = '';
+  if (!q || !q.trim()) return;
+  const matches = findTopMatches(q, 15, 0.35);
+  if (matches.length === 0) {
+    list.innerHTML = '<div class="no-match">未找到相似度足够的匹配项，请尝试更换关键字。</div>';
+    return;
+  }
+  matches.forEach(item => {
+    const div = document.createElement('div');
+    div.className = 'match-item';
+    div.innerHTML = `<div class="brand">${item.brand}${isCuban(item.brand) ? ' · 古巴' : ' · 非古'}</div><div class="name">${item.name}</div><div class="spec">${item.ring} · ${getPureLenStr(item.len_int, item.len_frac)}</div>`;
+    div.onclick = () => {
+      document.getElementById('fw-brand').value = item.brand;
+      updateFwModels();
+      document.getElementById('fw-model').value = item.name;
+      renderFwResult(item);
+      list.innerHTML = '';
+      document.getElementById('fw-search').value = item.brand + ' ' + item.name;
+    };
+    list.appendChild(div);
+  });
+}
+
+function doReverse() {
+  const ring = getSelectedValue('rv-ring', 'rv-ring-custom');
+  const brand = document.getElementById('rv-brand').value;
+  const lenInt = getSelectedValue('rv-len-int', 'rv-len-int-custom');
+  const lenFrac = document.getElementById('rv-len-frac').value;
+
+  let results = DB;
+  if(ring) results = results.filter(d => d.ring == ring);
+  if(brand) results = results.filter(d => d.brand === brand);
+  if(lenInt) {
+    const targetLen = parseInt(lenInt) + fracNumMap[lenFrac];
+    results = results.filter(d => Math.abs((d.len_int + fracNumMap[d.len_frac]) - targetLen) < 0.01);
+  }
+
+  const box = document.getElementById('rv-result');
+  const list = document.getElementById('rv-match-list');
+  const lbl = document.getElementById('rv-result-label');
+  list.innerHTML = '';
+  box.classList.add('show');
+
+  if(results.length === 0) {
+    lbl.textContent = '未找到匹配品规';
+    list.innerHTML = '<div class="no-match">数据库中无完全匹配数据。</div>';
+    return;
+  }
+  lbl.textContent = `找到 ${results.length} 个匹配结果（点击可直接复制录入格式）`;
+  results.forEach(item => {
+    const div = document.createElement('div');
+    div.className = 'match-item';
+    const finalTxt = buildPureFormat(item.brand, item.name, item.ring, item.len_int, item.len_frac);
+    const cnDisplay = getCnDisplay(item);
+    const badge = cubanLabel(item.brand);
+    div.innerHTML = `<div class="brand">${item.brand}</div><div class="name">${item.name}</div><div class="spec">${item.ring} · ${getPureLenStr(item.len_int, item.len_frac)}</div>` +
+      `<div class="cuban-badge ${isCuban(item.brand) ? 'cuban' : 'nc'}">${badge}</div>` +
+      `<div class="cn-name">常用中文名（参考译名）：${cnDisplay || '暂无对应中文俗名'}</div>`;
+    div.onclick = () => {
+      safeCopy(finalTxt);
+      showToast('已复制：' + finalTxt);
+      addRecord('反查', item.brand, item.name, item.ring, getPureLenStr(item.len_int, item.len_frac), finalTxt);
+    };
+    list.appendChild(div);
+  });
+}
+
+function genFormat() {
+  const brandPart = document.getElementById('inp-brand').value.trim();
+  const namePart = document.getElementById('inp-model').value.trim();
+  const ring = getSelectedValue('inp-ring', 'inp-ring-custom');
+  const lenInt = getSelectedValue('inp-len-int', 'inp-len-int-custom');
+  const lenFrac = document.getElementById('inp-len-frac').value;
+
+  const box = document.getElementById('inp-result');
+  const copyArea = document.getElementById('inp-copy-text');
+
+  if(!ring || !lenInt) { alert('请至少选择或输入环径和长度整数位。'); return; }
+
+  const txt = buildPureFormat(brandPart, namePart, ring, lenInt, lenFrac);
+  copyArea.textContent = txt;
+  addRecord('生成', brandPart, namePart, ring, getPureLenStr(lenInt, lenFrac), txt);
+
+  const suggestList = document.getElementById('inp-suggest-list');
+  suggestList.innerHTML = '';
+  const query = (brandPart + ' ' + namePart).trim();
+  const top3 = query ? findTopMatches(query, 3, 0) : [];
+  if (top3.length === 0) {
+    suggestList.innerHTML = '<div class="no-match">未输入品牌/规格文字，或数据库中暂无相近结果。</div>';
+  } else {
+    top3.forEach(item => {
+      const div = document.createElement('div');
+      div.className = 'match-item';
+      const finalTxt = buildPureFormat(item.brand, item.name, item.ring, item.len_int, item.len_frac);
+      const cnDisplay = getCnDisplay(item);
+      div.innerHTML = `<div class="brand">${item.brand}${isCuban(item.brand) ? ' · 古巴' : ' · 非古'}</div><div class="name">${item.name}</div><div class="spec">${item.ring} · ${getPureLenStr(item.len_int, item.len_frac)}</div><div class="cn-name">${cnDisplay || ''}</div>`;
+      div.onclick = () => {
+        safeCopy(finalTxt);
+        showToast('已复制：' + finalTxt);
+      };
+      suggestList.appendChild(div);
+    });
+  }
+
+  box.classList.add('show');
+}
+
+function copyText(id) {
+  const txt = document.getElementById(id).textContent;
+  safeCopy(txt);
+  showToast('已复制');
+}
+
+// 兼容处理
+function safeCopy(text) {
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).catch(() => { fallbackCopy(text); });
+      return;
+    }
+  } catch (e) {}
+  fallbackCopy(text);
+}
+function fallbackCopy(text) {
+  try {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+  } catch (e) {}
+}
+
+let currentFwItem = null;
+function copyFwFormat() {
+  if (!currentFwItem) return;
+  const txt = document.getElementById('fw-copy-text').textContent;
+  safeCopy(txt);
+  showToast('已复制');
+  addRecord('正查', currentFwItem.brand, currentFwItem.name, currentFwItem.ring, getPureLenStr(currentFwItem.len_int, currentFwItem.len_frac), txt);
+}
+
+// ==============================
+// 录入格式记录表
+// ==============================
+const RECORDS_KEY = 'cigarSpecRecords_v1';
+let records = [];
+try { records = JSON.parse(localStorage.getItem(RECORDS_KEY) || '[]'); } catch(e) { records = []; }
+
+function saveRecords() {
+  try { localStorage.setItem(RECORDS_KEY, JSON.stringify(records)); } catch(e) {}
+}
+
+function addRecord(source, brand, name, ring, lenStr, text) {
+  records.unshift({
+    id: Date.now() + '_' + Math.random().toString(36).slice(2, 7),
+    source, brand: brand || '', name: name || '', ring: ring || '', lenStr: lenStr || '',
+    text,
+    time: new Date().toLocaleString('zh-CN', { hour12: false })
+  });
+  saveRecords();
+  renderRecordsTable();
+}
+
+function deleteRecord(id) {
+  records = records.filter(r => r.id !== id);
+  saveRecords();
+  renderRecordsTable();
+}
+
+function clearAllRecords() {
+  if (records.length === 0) return;
+  if (!confirm('确定要清除全部录入记录吗？此操作不可撤销。')) return;
+  records = [];
+  saveRecords();
+  renderRecordsTable();
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function renderRecordsTable() {
+  const tbody = document.getElementById('records-tbody');
+  const empty = document.getElementById('records-empty');
+  const countEl = document.getElementById('records-count');
+  countEl.textContent = records.length;
+  tbody.innerHTML = '';
+  if (records.length === 0) {
+    empty.classList.add('show');
+    return;
+  }
+  empty.classList.remove('show');
+  records.forEach((r, idx) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td data-col="idx" data-label="#">${records.length - idx}</td>
+      <td data-col="source" data-label="来源"><span class="rec-source">${escapeHtml(r.source)}</span></td>
+      <td data-col="text" data-label="内容" class="rec-text">${escapeHtml(r.text)}</td>
+      <td data-col="ring" data-label="环径">${escapeHtml(r.ring)}</td>
+      <td data-col="len" data-label="长度">${escapeHtml(r.lenStr)}</td>
+      <td data-col="time" data-label="时间">${escapeHtml(r.time)}</td>
+      <td data-col="del" data-label=""><button class="rec-del" title="删除此条" onclick="deleteRecord('${r.id}')">×</button></td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function exportRecordsCSV() {
+  if (records.length === 0) { showToast('暂无记录可导出'); return; }
+  const header = ['序号', '来源', '品牌', '规格名', '录入格式文本', '环径', '长度', '时间'];
+  const csvEscape = (v) => {
+    const s = String(v == null ? '' : v);
+    return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+  };
+  const rows = records.map((r, idx) => [
+    records.length - idx, r.source, r.brand, r.name, r.text, r.ring, r.lenStr, r.time
+  ]);
+  const lines = [header, ...rows].map(row => row.map(csvEscape).join(',')).join('\r\n');
+  const blob = new Blob(['\uFEFF' + lines], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const ts = new Date();
+  const pad = n => String(n).padStart(2, '0');
+  const fname = `录入记录_${ts.getFullYear()}${pad(ts.getMonth()+1)}${pad(ts.getDate())}_${pad(ts.getHours())}${pad(ts.getMinutes())}.csv`;
+  a.href = url;
+  a.download = fname;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast('已导出：' + fname);
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg || '已复制';
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 1800);
+}
+
+function switchTab(name) {
+  const names = ['forward','reverse','input'];
+  document.querySelectorAll('.tab').forEach((t, i) => {
+    t.classList.toggle('active', names[i] === name);
+  });
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-' + name).classList.add('active');
+}
+
+DB.forEach(item => { item.matchKey = toRomanMatchKey(item.brand + " " + item.name); });
+initSelects();
+renderRecordsTable();
+</script>
+</body>
+</html>
